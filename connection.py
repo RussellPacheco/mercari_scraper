@@ -11,7 +11,12 @@ from time import sleep
 from typing import List, Any, Union
 
 ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
-DRIVER_PATH = os.path.join(ROOT_PATH, "driver/chromedriver.exe")
+DRIVER_PATH = None
+
+if os.name == "nt":
+    DRIVER_PATH = os.path.join(ROOT_PATH, "driver/chromedriver.exe")
+elif os.name == "posix":
+    DRIVER_PATH = os.path.join(ROOT_PATH, "driver/chromedriver")
 
 
 def _get_soup(url: str) -> BeautifulSoup:

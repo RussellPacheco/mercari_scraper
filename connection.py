@@ -39,11 +39,11 @@ class Mercari:
         for page_id in range(int(1e9)):
             items, search_res_head_tag = self.fetch_items_pagination(keyword, page_id, price_min, price_max)
             items_list.extend(items)
-            logger.debug(f'Found {len(items_list)} items so far.')
-
-            if max_items_to_fetch is not None and len(items_list) > max_items_to_fetch:
-                logger.debug(f'Reached the maximum items to fetch: {max_items_to_fetch}.')
-                break
+            # logger.debug(f'Found {len(items_list)} items so far.')
+            #
+            # if max_items_to_fetch is not None and len(items_list) > max_items_to_fetch:
+            #     logger.debug(f'Reached the maximum items to fetch: {max_items_to_fetch}.')
+            #     break
 
             if search_res_head_tag is None:
                 break
@@ -59,19 +59,21 @@ class Mercari:
             self,
             keyword: str,
             page_id: int = 1,
-            price_min: Union[None, int] = None,
-            price_max: Union[None, int] = None
+            price_min: Union[None, str] = None,
+            price_max: Union[None, str] = None,
+            e_flag: bool = False,
+            c_flag: bool = False
     ) -> Union[List[str], Any]:  # List of URLS and a HTML marker.
-        soup = _get_soup(self._fetch_url(page_id, keyword, price_min=price_min, price_max=price_max))
+        soup = _get_soup(self._fetch_url(page_id, keyword, price_min=price_min, price_max=price_max, e_flag=e_flag, c_flag=c_flag))
         search_res_head_tag = soup.find('ul', {'id': 'item-grid'})
-        deets = [s.find("mer-item-thumbnail").attrs["price"] for s in soup.find_all('li', {"data-testid": "item-cell"})]
+        prices = [s.find("mer-item-thumbnail").attrs["price"] for s in soup.find_all('li', {"data-testid": "item-cell"})]
         items = [s.find("a").attrs['href'] for s in soup.find_all('li', {"data-testid": "item-cell"} )]
         items = [it if it.startswith('http') else 'https://jp.mercari.com' + it for it in items]
 
         results = []
 
-        for i in range(len(deets)):
-            results.append([deets[i], items[i]])
+        for i in range(len(prices)):
+            results.append([prices[i], items[i]])
 
         return results, search_res_head_tag
 
@@ -79,12 +81,23 @@ class Mercari:
             self,
             page: int = 1,
             keyword: str = 'bicycle',
-            price_min: Union[None, int] = None,
-            price_max: Union[None, int] = None
+            price_min: Union[None, str] = None,
+            price_max: Union[None, str] = None,
+            e_flag: bool = False,
+            c_flag: bool = False
     ):
+
+        #電気・スマホ・カメラ = t1_category_id=7&category_id=7&t2_category_id=undefined
+            #PC/タブレット = t1_category_id=7&category_id=96&t2_category_id=96
+
         url = f'https://www.mercari.com/jp/search/?keyword={keyword}'
         url += f"&page={page}"
-        url += "&t1_category_id=7&category_id=96&t2_category_id=96&sort=created_time&order=desc&status=on_sale"
+
+        if c_flag:
+            url += "t1_category_id=7&category_id=96&t2_category_id=96"
+        elif e_flag:
+            url += "t1_category_id=7&category_id=7&t2_category_id=undefined"
+        url += "&sort=created_time&order=desc&status=on_sale"
         if price_min is not None:
             url += f'&price_min={price_min}'
         if price_max is not None:

@@ -19,7 +19,7 @@ print(f"There are {len(results[0])} results")
 print(results[0])
 
 
-line_bot_api = LineBotApi(os.getenv("CONNECTION_TOKEN"))
-
-try:
-    line_bot_api.push_message("<USERID>", )
+# line_bot_api = LineBotApi(os.getenv("CONNECTION_TOKEN"))
+#
+# try:
+#     line_bot_api.push_message("<USERID>", )

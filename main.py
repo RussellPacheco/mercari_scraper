@@ -1,3 +1,5 @@
+#!env/bin/python
+
 from dotenv import load_dotenv
 from connection import Mercari, ROOT_PATH
 import os

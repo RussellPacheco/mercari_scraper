@@ -37,7 +37,7 @@ def previously_viewed_item_check(item_list: list):
         data_file_path = f"{ROOT_PATH}/data.json"
 
     if not os.path.exists(data_file_path):
-        json_file = open("data.json", "w")
+        json_file = open(data_file_path, "w")
         json.dump({}, json_file)
         json_file.close()
 
@@ -56,7 +56,7 @@ def previously_viewed_item_check(item_list: list):
         print("There are unseen items.")
         print(f"Sending new items to line_msg {new_items}")
 
-        json_file = open("data.json")
+        json_file = open(data_file_path)
         data = json.load(json_file)
         json_file.close()
 

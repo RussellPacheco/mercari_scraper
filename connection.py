@@ -67,9 +67,10 @@ class Mercari:
             price_min: Union[None, str] = None,
             price_max: Union[None, str] = None,
             e_flag: bool = False,
-            c_flag: bool = False
+            c_flag: bool = False,
+            p_flag: bool = False
     ) -> Union[List[str], Any]:  # List of URLS and a HTML marker.
-        soup = _get_soup(self._fetch_url(page_id, keyword, price_min=price_min, price_max=price_max, e_flag=e_flag, c_flag=c_flag))
+        soup = _get_soup(self._fetch_url(page_id, keyword, price_min=price_min, price_max=price_max, e_flag=e_flag, c_flag=c_flag, p_flag=p_flag))
         search_res_head_tag = soup.find('ul', {'id': 'item-grid'})
         prices = [s.find("mer-item-thumbnail").attrs["price"] for s in soup.find_all('li', {"data-testid": "item-cell"})]
         items = [s.find("a").attrs['href'] for s in soup.find_all('li', {"data-testid": "item-cell"} )]
@@ -89,7 +90,8 @@ class Mercari:
             price_min: Union[None, str] = None,
             price_max: Union[None, str] = None,
             e_flag: bool = False,
-            c_flag: bool = False
+            c_flag: bool = False,
+            p_flag: bool = False
     ):
 
         #電気・スマホ・カメラ = t1_category_id=7&category_id=7&t2_category_id=undefined
@@ -98,10 +100,12 @@ class Mercari:
         url = f'https://www.mercari.com/jp/search/?keyword={keyword}'
         url += f"&page={page}"
 
-        if c_flag:
-            url += "t1_category_id=7&category_id=96&t2_category_id=96"
+        if p_flag:
+            url += "&t1_category_id=7&category_id=1156&t2_category_id=96&t3_category_id=1156"
+        elif c_flag:
+            url += "&t1_category_id=7&category_id=96&t2_category_id=96"
         elif e_flag:
-            url += "t1_category_id=7&category_id=7&t2_category_id=undefined"
+            url += "&t1_category_id=7&category_id=7&t2_category_id=undefined"
         url += "&sort=created_time&order=desc&status=on_sale"
         if price_min is not None:
             url += f'&price_min={price_min}'

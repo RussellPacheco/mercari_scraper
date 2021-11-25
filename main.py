@@ -21,9 +21,11 @@ parser.add_argument("keyword", help="Search keyword")
 parser.add_argument("--price-min")
 parser.add_argument("--price-max")
 parser.add_argument("-e", "--electronics", help="Search all electronics", action="store_true")
-parser.add_argument("-c", "--computers", help="Search specifically for computer parts", action="store_true")
+parser.add_argument("-c", "--computers", help="Search specifically for computer related items", action="store_true")
+parser.add_argument("-p", "--pc-parts", help="Search even more specifically for pc parts", action="store_true")
 
 args = parser.parse_args()
+
 
 def previously_viewed_item_check(item_list: list):
 
@@ -89,7 +91,8 @@ if __name__ == "__main__":
         price_min=args.price_min,
         price_max=args.price_max,
         e_flag=args.electronics,
-        c_flag=args.computers)
+        c_flag=args.computers,
+        p_flag=args.pc_parts)
     print(f"There are {len(results[0])} results")
 
     print("Checking to see if items have been previously seen")

@@ -23,10 +23,10 @@ def _get_soup(url: str) -> BeautifulSoup:
     OPTIONS = Options()
     OPTIONS.headless = True
     OPTIONS.add_argument("--incognito")
-
     driver = webdriver.Chrome(options=OPTIONS, executable_path=DRIVER_PATH)
     driver.get(url)
     WebDriverWait(driver, 10).until(expected_conditions.visibility_of_any_elements_located((By.XPATH, '//*[@id="item-grid"]')))
+    
     soup = BeautifulSoup(driver.page_source, "lxml")
     return soup
 
@@ -71,8 +71,8 @@ class Mercari:
             p_flag: bool = False
     ) -> Union[List[str], Any]:  # List of URLS and a HTML marker.
         soup = _get_soup(self._fetch_url(page_id, keyword, price_min=price_min, price_max=price_max, e_flag=e_flag, c_flag=c_flag, p_flag=p_flag))
-        search_res_head_tag = soup.find('ul', {'id': 'item-grid'})
-        prices = [s.find("mer-item-thumbnail").attrs["price"] for s in soup.find_all('li', {"data-testid": "item-cell"})]
+        search_res_head_tag = soup.find('div', {'id': 'item-grid'})
+        prices = [s.find(class_="merPrice").text for s in soup.find_all('li', {"data-testid": "item-cell"})]
         items = [s.find("a").attrs['href'] for s in soup.find_all('li', {"data-testid": "item-cell"} )]
         items = [it if it.startswith('http') else 'https://jp.mercari.com' + it for it in items]
 

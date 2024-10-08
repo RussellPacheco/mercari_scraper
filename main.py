@@ -56,7 +56,7 @@ def previously_viewed_item_check(item_list: list):
         if item["item"] not in previously_viewed_items:
             new_items.append(item)
         else: # Check if the price has changed
-            if data[item["item"]]["original_price"] != item["price"]:
+            if data[item["item"]]["last_price"] != item["price"]:
                 items_to_update.append(item)
 
     if len(new_items) > 0:
@@ -69,6 +69,7 @@ def previously_viewed_item_check(item_list: list):
         for item in new_items:
             data[item["item"]] = {
                 "price": item["price"], 
+                "last_price": item["price"],
                 "original_price": item["price"], 
                 "viewed": str(datetime.now()), 
                 "updated": str(datetime.now())
@@ -89,6 +90,7 @@ def previously_viewed_item_check(item_list: list):
         for item in items_to_update:
             data[item["item"]] = {
                 "price": item["price"], 
+                "last_price": data[item["item"]]["price"],
                 "original_price": data[item["item"]]["original_price"],
                 "viewed": data[item["item"]]["viewed"], 
                 "updated": str(datetime.now())
@@ -116,7 +118,13 @@ def line_msg(data_to_send):
 
     for item in new_items.keys():
 
-        message = f"Hey Russell,\n\nThere is a new item.\n\nPrice: {new_items[item]['price']}円\nLink: {item}"
+        message = f"""Hey Russell,
+        
+There is a new item.
+
+Price: {new_items[item]['price']}円
+
+Link: {item}"""
 
         try:
             line_bot_api.push_message(os.getenv("USER_ID"), TextSendMessage(text=message))
@@ -125,7 +133,15 @@ def line_msg(data_to_send):
 
     for item in updated_items.keys():
             
-            message = f"Hey Russell,\n\nThere is an updated item.\n\nPrice: {updated_items[item]['price']}円\nOriginal Price: {updated_items[item]['original_price']}\nLink: {item}"
+            message = f"""Hey Russell,
+            
+There is an updated item.
+
+New Price: {updated_items[item]['price']}円
+Last Price: {updated_items[item]['last_price']}円
+Original Price: {updated_items[item]['original_price']}円
+
+Link: {item}"""
     
             try:
                 line_bot_api.push_message(os.getenv("USER_ID"), TextSendMessage(text=message))

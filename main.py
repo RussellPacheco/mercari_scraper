@@ -46,43 +46,91 @@ def previously_viewed_item_check(item_list: list):
     json_file.close()
 
     previously_viewed_items = [key for key in data.keys()]
-
     new_items = []
+    items_to_update = []
+
+    labled_new_items = {}
+    labled_items_to_update = {}
+
     for item in item_list:
-        if item[1] not in previously_viewed_items:
+        if item["item"] not in previously_viewed_items:
             new_items.append(item)
+        else: # Check if the price has changed
+            if data[item["item"]]["original_price"] != item["price"]:
+                items_to_update.append(item)
 
     if len(new_items) > 0:
         print("There are unseen items.")
-        print(f"Sending new items to line_msg {new_items}")
 
         json_file = open(data_file_path)
         data = json.load(json_file)
         json_file.close()
 
         for item in new_items:
-            data[item[1]] = {"price": item[0], "viewed": str(datetime.now())}
+            data[item["item"]] = {
+                "price": item["price"], 
+                "original_price": item["price"], 
+                "viewed": str(datetime.now()), 
+                "updated": str(datetime.now())
+            }
+            labled_new_items[item["item"]] = data[item["item"]]
+
+        with open(data_file_path, "w") as json_file:
+            json.dump(data, json_file)
+            json_file.close()
+   
+    if len(items_to_update) > 0:
+        print("There are items with updated prices")
+
+        json_file = open(data_file_path)
+        data = json.load(json_file)
+        json_file.close()
+
+        for item in items_to_update:
+            data[item["item"]] = {
+                "price": item["price"], 
+                "original_price": data[item["item"]]["original_price"],
+                "viewed": data[item["item"]]["viewed"], 
+                "updated": str(datetime.now())
+            }
+            labled_items_to_update[item["item"]] = data[item["item"]]
 
         with open(data_file_path, "w") as json_file:
             json.dump(data, json_file)
             json_file.close()
 
-        return new_items
-    print("There are no new items")
-    return False
+    if len(labled_new_items) > 0 or len(labled_items_to_update) > 0:
+        print(f"Sending new items to line_msg {labled_new_items}")
+        print(f"Sending updated items to line_msg {labled_items_to_update}")
+        return labled_new_items, labled_items_to_update
+
+    if len(labled_new_items) == 0 and len(labled_items_to_update) == 0:
+        print("There are no new items")
+        return False
+    
+
 
 
 def line_msg(data_to_send):
+    new_items, updated_items = data_to_send
 
-    for item in data_to_send:
+    for item in new_items.keys():
 
-        message = f"Hey Russell,\n\nThere is a new item.\n\nPrice: {item[0]}円\nLink: {item[1]}"
+        message = f"Hey Russell,\n\nThere is a new item.\n\nPrice: {new_items[item]['price']}円\nLink: {item}"
 
         try:
             line_bot_api.push_message(os.getenv("USER_ID"), TextSendMessage(text=message))
         except LineBotApiError as e:
             print(f"[ERROR]:{e}")
 
+    for item in updated_items.keys():
+            
+            message = f"Hey Russell,\n\nThere is an updated item.\n\nPrice: {updated_items[item]['price']}円\nOriginal Price: {updated_items[item]['original_price']}\nLink: {item}"
+    
+            try:
+                line_bot_api.push_message(os.getenv("USER_ID"), TextSendMessage(text=message))
+            except LineBotApiError as e:
+                print(f"[ERROR]:{e}")
 
 if __name__ == "__main__":
     print("Checking Mercari for items")
@@ -93,10 +141,10 @@ if __name__ == "__main__":
         e_flag=args.electronics,
         c_flag=args.computers,
         p_flag=args.pc_parts)
-    print(f"There are {len(results[0])} results")
+    print(f"There are {len(results)} results")
 
     print("Checking to see if items have been previously seen")
-    items_to_message = previously_viewed_item_check(results[0])
+    items_to_message = previously_viewed_item_check(results)
 
     if items_to_message is not False:
         line_msg(items_to_message)

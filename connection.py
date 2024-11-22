@@ -21,14 +21,18 @@ elif os.name == "posix":
 
 def _get_soup(url: str) -> BeautifulSoup:
     OPTIONS = Options()
-    OPTIONS.headless = False
+    OPTIONS.headless = True
     OPTIONS.add_argument("--incognito")
+    OPTIONS.add_argument("--no-sandbox")
+    OPTIONS.add_argument("--disable-dev-shm-usage")
+    OPTIONS.add_argument("--disable-blink-features=AutomationControlled")
+    OPTIONS.add_argument(f"user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
+
     driver = webdriver.Chrome(options=OPTIONS, executable_path=DRIVER_PATH)
     driver.get(url)
-
     try: 
-        WebDriverWait(driver, 20).until(expected_conditions.visibility_of_any_elements_located((By.XPATH, '//*[@id="item-grid"]')))
-    except: 
+        WebDriverWait(driver, 20).until(expected_conditions.visibility_of_any_elements_located((By.ID, 'item-grid')))
+    except Exception as e: 
         return None
 
     soup = BeautifulSoup(driver.page_source, "lxml")
@@ -76,7 +80,7 @@ class Mercari:
     ) -> Union[List[str], Any]:  # List of URLS and a HTML marker.
         soup = _get_soup(self._fetch_url(page_id, keyword, price_min=price_min, price_max=price_max, e_flag=e_flag, c_flag=c_flag, p_flag=p_flag))
         if soup is None:
-            return [], None
+            return []
 
         results = []
 

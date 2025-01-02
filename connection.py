@@ -6,8 +6,6 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 
 import os
-import re
-from time import sleep
 from typing import List, Any, Union
 
 ROOT_PATH = os.path.dirname(os.path.abspath(__file__))

@@ -9,6 +9,7 @@ from connection import Mercari, ROOT_PATH
 import grpc
 import transmitter.transmitter_pb2 as transmitter_pb2
 import transmitter.transmitter_pb2_grpc as transmitter_pb2_grpc
+from google.protobuf.wrappers_pb2 import StringValue
 
 # from linebot import LineBotApi
 # from linebot.models import TextSendMessage
@@ -116,6 +117,7 @@ def previously_viewed_item_check(item_list: list):
     
 
 def transmit_msg(data_to_send):
+    grpc_url = f"{os.getenv('GRPC_HOST')}:{os.getenv('GRPC_PORT')}"
     new_items, updated_items = data_to_send
 
     for item in new_items.keys():
@@ -130,13 +132,13 @@ Link: {item}"""
 
         try:
             # line_bot_api.push_message(os.getenv("USER_ID"), TextSendMessage(text=message))
-            with grpc.insecure_channel("localhost:50051") as channel:
+            with grpc.insecure_channel(grpc_url) as channel:
                 stub = transmitter_pb2_grpc.TransmitterStub(channel)
                 stub.SendMessage(
                     transmitter_pb2.Message(
                         source=transmitter_pb2.Source(name="Mercari Scraper"), 
                         type=transmitter_pb2.MessageType.TEXT, 
-                        text=transmitter_pb2.StringValue(value=message)
+                        text=StringValue(value=message)
                     )
                 )
         except Exception as e:
@@ -154,13 +156,13 @@ Original Price: {updated_items[item]['original_price']}円
 Link: {item}"""
 
         try:
-            with grpc.insecure_channel("localhost:50051") as channel:
+            with grpc.insecure_channel(grpc_url) as channel:
                 stub = transmitter_pb2_grpc.TransmitterStub(channel)
                 stub.SendMessage(
                     transmitter_pb2.Message(
                         source=transmitter_pb2.Source(name="Mercari Scraper"), 
                         type=transmitter_pb2.MessageType.TEXT, 
-                        text=transmitter_pb2.StringValue(value=message)
+                        text=StringValue(value=message)
                     )
                 )
         except Exception as e:

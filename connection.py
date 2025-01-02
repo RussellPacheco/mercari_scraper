@@ -3,6 +3,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
 
 import os
@@ -26,7 +27,8 @@ def _get_soup(url: str) -> BeautifulSoup:
     OPTIONS.add_argument("--disable-blink-features=AutomationControlled")
     OPTIONS.add_argument(f"user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
 
-    driver = webdriver.Chrome(options=OPTIONS, executable_path=DRIVER_PATH)
+    service = Service(executable_path=DRIVER_PATH)
+    driver = webdriver.Chrome(options=OPTIONS, service=service)
     driver.get(url)
     try: 
         WebDriverWait(driver, 20).until(expected_conditions.visibility_of_any_elements_located((By.ID, 'item-grid')))

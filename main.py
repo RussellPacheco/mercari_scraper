@@ -1,22 +1,23 @@
 #!env/bin/python
 
 from dotenv import load_dotenv
-from connection import Mercari, ROOT_PATH
 import os
 import json
 from datetime import datetime
 import argparse
+from connection import Mercari, ROOT_PATH
+import grpc
+import transmitter.transmitter_pb2 as transmitter_pb2
+import transmitter.transmitter_pb2_grpc as transmitter_pb2_grpc
 
-from linebot import LineBotApi
-from linebot.models import TextSendMessage
-from linebot.exceptions import LineBotApiError
+# from linebot import LineBotApi
+# from linebot.models import TextSendMessage
+# from linebot.exceptions import LineBotApiError
+
 
 load_dotenv()
 
-mercari_api = Mercari()
-line_bot_api = LineBotApi(os.getenv("CONNECTION_TOKEN"))
 parser = argparse.ArgumentParser(prog="main.py", description="Automatically search Mercari and send all unseen items to your line account")
-
 parser.add_argument("keyword", help="Search keyword")
 parser.add_argument("--price-min")
 parser.add_argument("--price-max")
@@ -26,9 +27,12 @@ parser.add_argument("-p", "--pc-parts", help="Search even more specifically for 
 
 args = parser.parse_args()
 
+mercari_api = Mercari()
+
+#line_bot_api = LineBotApi(os.getenv("CONNECTION_TOKEN"))
+channel = grpc.insecure_channel("localhost:50051")
 
 def previously_viewed_item_check(item_list: list):
-
     data_file_path = None
 
     if os.name == "nt":
@@ -111,9 +115,7 @@ def previously_viewed_item_check(item_list: list):
         return False
     
 
-
-
-def line_msg(data_to_send):
+def transmit_msg(data_to_send):
     new_items, updated_items = data_to_send
 
     for item in new_items.keys():
@@ -127,13 +129,21 @@ Price: {new_items[item]['price']}円
 Link: {item}"""
 
         try:
-            line_bot_api.push_message(os.getenv("USER_ID"), TextSendMessage(text=message))
-        except LineBotApiError as e:
+            # line_bot_api.push_message(os.getenv("USER_ID"), TextSendMessage(text=message))
+            with grpc.insecure_channel("localhost:50051") as channel:
+                stub = transmitter_pb2_grpc.TransmitterStub(channel)
+                stub.SendMessage(
+                    transmitter_pb2.Message(
+                        source=transmitter_pb2.Source(name="Mercari Scraper"), 
+                        type=transmitter_pb2.MessageType.TEXT, 
+                        text=transmitter_pb2.StringValue(value=message)
+                    )
+                )
+        except Exception as e:
             print(f"[ERROR]:{e}")
 
     for item in updated_items.keys():
-            
-            message = f"""Hey Russell,
+        message = f"""Hey Russell,
             
 There is an updated item.
 
@@ -142,11 +152,19 @@ Last Price: {updated_items[item]['last_price']}円
 Original Price: {updated_items[item]['original_price']}円
 
 Link: {item}"""
-    
-            try:
-                line_bot_api.push_message(os.getenv("USER_ID"), TextSendMessage(text=message))
-            except LineBotApiError as e:
-                print(f"[ERROR]:{e}")
+
+        try:
+            with grpc.insecure_channel("localhost:50051") as channel:
+                stub = transmitter_pb2_grpc.TransmitterStub(channel)
+                stub.SendMessage(
+                    transmitter_pb2.Message(
+                        source=transmitter_pb2.Source(name="Mercari Scraper"), 
+                        type=transmitter_pb2.MessageType.TEXT, 
+                        text=transmitter_pb2.StringValue(value=message)
+                    )
+                )
+        except Exception as e:
+            print(f"[ERROR]:{e}")
 
 if __name__ == "__main__":
     print("Checking Mercari for items")
@@ -163,4 +181,4 @@ if __name__ == "__main__":
     items_to_message = previously_viewed_item_check(results)
 
     if items_to_message is not False:
-        line_msg(items_to_message)
+        transmit_msg(items_to_message)

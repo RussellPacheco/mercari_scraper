@@ -20,7 +20,8 @@ elif os.name == "posix":
 
 def _get_soup(url: str) -> BeautifulSoup:
     OPTIONS = Options()
-    OPTIONS.headless = True
+    OPTIONS.add_argument("--headless=new")
+    OPTIONS.add_argument("--remote-debugging-pipe")
     OPTIONS.add_argument("--incognito")
     OPTIONS.add_argument("--no-sandbox")
     OPTIONS.add_argument("--disable-dev-shm-usage")
